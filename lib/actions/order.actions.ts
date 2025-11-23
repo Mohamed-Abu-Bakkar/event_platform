@@ -1,6 +1,5 @@
 "use server"
 
-import Stripe from 'stripe';
 import { CheckoutOrderParams, CreateOrderParams, GetOrdersByEventParams, GetOrdersByUserParams } from "@/types"
 import { redirect } from 'next/navigation';
 import { handleError } from '../utils';
@@ -9,37 +8,60 @@ import Order from '../database/models/order.model';
 import Event from '../database/models/event.model';
 import {ObjectId} from 'mongodb';
 import User from '../database/models/user.model';
+import { clerkClient } from '@clerk/nextjs/server';
 
 export const checkoutOrder = async (order: CheckoutOrderParams) => {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
-  const price = order.isFree ? 0 : Number(order.price) * 100;
-
   try {
-    const session = await stripe.checkout.sessions.create({
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            unit_amount: price,
-            product_data: {
-              name: order.eventTitle
-            }
-          },
-          quantity: 1
-        },
-      ],
-      metadata: {
-        eventId: order.eventId,
-        buyerId: order.buyerId,
-      },
-      mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/profile`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/`,
+    // Create order directly without Stripe
+    await connectToDatabase();
+
+    // Check if event has available tickets
+    const event = await Event.findById(order.eventId);
+    if (!event) throw new Error('Event not found');
+    
+    // If maxTickets is set and greater than 0, check availability
+    if (event.maxTickets && event.maxTickets > 0) {
+      // Count existing orders for this event
+      const existingOrders = await Order.countDocuments({ event: order.eventId });
+      
+      if (existingOrders >= event.maxTickets) {
+        throw new Error('Sorry, this event is sold out');
+      }
+    }
+
+    let buyer = await User.findOne({ clerkId: order.buyerId })
+    
+    // If buyer doesn't exist, create them from Clerk data
+    if (!buyer) {
+      console.log('Buyer not found in DB, fetching from Clerk...')
+      const clerkUser = await clerkClient.users.getUser(order.buyerId)
+      
+      buyer = await User.create({
+        clerkId: order.buyerId,
+        email: clerkUser.emailAddresses[0].emailAddress,
+        username: clerkUser.username || clerkUser.emailAddresses[0].emailAddress.split('@')[0],
+        firstName: clerkUser.firstName || '',
+        lastName: clerkUser.lastName || '',
+        photo: clerkUser.imageUrl,
+      })
+      
+      console.log('Buyer created successfully')
+    }
+    
+    const newOrder = await Order.create({
+      eventTitle: order.eventTitle,
+      eventId: order.eventId,
+      buyerId: order.buyerId,
+      totalAmount: order.isFree ? '0' : order.price,
+      createdAt: new Date(),
+      event: order.eventId,
+      buyer: buyer._id,
     });
 
-    redirect(session.url!)
+    // Redirect to profile page
+    redirect('/profile?success=true')
   } catch (error) {
+    console.error('Checkout error:', error)
     throw error;
   }
 }
@@ -47,11 +69,14 @@ export const checkoutOrder = async (order: CheckoutOrderParams) => {
 export const createOrder = async (order: CreateOrderParams) => {
   try {
     await connectToDatabase();
+
+    const buyer = await User.findOne({ clerkId: order.buyerId })
+    if (!buyer) throw new Error('Buyer not found')
     
     const newOrder = await Order.create({
       ...order,
       event: order.eventId,
-      buyer: order.buyerId,
+      buyer: buyer._id,
     });
 
     return JSON.parse(JSON.stringify(newOrder));
@@ -121,8 +146,19 @@ export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUs
   try {
     await connectToDatabase()
 
+    let user = await User.findOne({ clerkId: userId })
+    
+    // If user doesn't exist, return empty data instead of throwing error
+    if (!user) {
+      console.log('User not found in database, returning empty orders')
+      return { 
+        data: [], 
+        totalPages: 0 
+      }
+    }
+
     const skipAmount = (Number(page) - 1) * limit
-    const conditions = { buyer: userId }
+    const conditions = { buyer: user._id }
 
     const orders = await Order.distinct('event._id')
       .find(conditions)
@@ -144,5 +180,25 @@ export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUs
     return { data: JSON.parse(JSON.stringify(orders)), totalPages: Math.ceil(ordersCount / limit) }
   } catch (error) {
     handleError(error)
+  }
+}
+
+// GET AVAILABLE TICKETS COUNT FOR AN EVENT
+export async function getAvailableTickets(eventId: string) {
+  try {
+    await connectToDatabase()
+
+    const event = await Event.findById(eventId)
+    if (!event || !event.maxTickets || event.maxTickets === 0) {
+      return null // Unlimited tickets
+    }
+
+    const soldTickets = await Order.countDocuments({ event: eventId })
+    const availableTickets = event.maxTickets - soldTickets
+
+    return availableTickets > 0 ? availableTickets : 0
+  } catch (error) {
+    handleError(error)
+    return null
   }
 }
