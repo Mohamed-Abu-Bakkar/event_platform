@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description:
     "Eventora is a modern platform for event management and ticketing.",
   icons: {
-    icon: "/assets/images/",
+    icon: "next.svg",
   },
 };
 
