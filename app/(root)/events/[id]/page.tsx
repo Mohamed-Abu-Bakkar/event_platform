@@ -1,20 +1,30 @@
 import CheckoutButton from "@/components/shared/CheckoutButton";
 import Collection from "@/components/shared/Collection";
+import AttendeesList from "@/components/shared/AttendeesList";
 import {
   getEventById,
   getRelatedEventsByCategory,
 } from "@/lib/actions/event.actions";
-import { getAvailableTickets } from "@/lib/actions/order.actions";
+import { getAvailableTickets, getEventAttendees } from "@/lib/actions/order.actions";
 import { formatDateTime } from "@/lib/utils";
 import { SearchParamProps } from "@/types";
 import Image from "next/image";
+import { auth } from "@clerk/nextjs/server";
+import { Ticket } from "lucide-react";
 
 const EventDetails = async ({
   params: { id },
   searchParams,
 }: SearchParamProps) => {
+  const { userId } = await auth();
   const event = await getEventById(id);
   const availableTickets = await getAvailableTickets(id);
+  
+  // Check if current user is the event organizer
+  const isOrganizer = userId === event.ownerId;
+  
+  // Get attendees if user is the organizer
+  const attendees = isOrganizer ? await getEventAttendees(id) : [];
 
   const relatedEvents = await getRelatedEventsByCategory({
     categoryId: event.category._id,
@@ -64,6 +74,7 @@ const EventDetails = async ({
                   alt="calendar"
                   width={32}
                   height={32}
+                  className="flex-shrink-0"
                 />
                 <div className="p-medium-16 lg:p-regular-20 flex flex-wrap items-center">
                   <p>
@@ -83,18 +94,14 @@ const EventDetails = async ({
                   alt="location"
                   width={32}
                   height={32}
+                  className="flex-shrink-0"
                 />
                 <p className="p-medium-16 lg:p-regular-20">{event.location}</p>
               </div>
 
               {event.maxTickets > 0 && (
                 <div className="p-regular-20 flex items-center gap-3">
-                  <Image
-                    src="/assets/icons/ticket.svg"
-                    alt="tickets"
-                    width={32}
-                    height={32}
-                  />
+                  <Ticket className="h-8 w-8 text-primary-500" />
                   <p className="p-medium-16 lg:p-regular-20">
                     {availableTickets !== null ? (
                       availableTickets > 0 ? (
@@ -126,6 +133,11 @@ const EventDetails = async ({
           </div>
         </div>
       </section>
+
+      {/* ATTENDEES LIST - Only visible to event organizer */}
+      {isOrganizer && (
+        <AttendeesList attendees={attendees} eventTitle={event.title} />
+      )}
 
       {/* EVENTS with the same category */}
       <section className="wrapper my-8 flex flex-col gap-8 md:gap-12">

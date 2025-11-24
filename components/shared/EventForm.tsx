@@ -23,6 +23,7 @@ import { useState } from "react";
 import Image from "next/image";
 import DatePicker from "react-datepicker";
 import { useUploadThing } from "@/lib/uploadthing";
+import { Ticket } from "lucide-react";
 
 import "react-datepicker/dist/react-datepicker.css";
 import { Checkbox } from "../ui/checkbox";
@@ -286,13 +287,7 @@ const EventForm = ({ type, event, eventId }: EventFormProps) => {
               <FormItem className="w-full">
                 <FormControl>
                   <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
-                    <Image
-                      src="/assets/icons/dollar.svg"
-                      alt="dollar"
-                      width={24}
-                      height={24}
-                      className="filter-grey"
-                    />
+                    <Ticket className="h-6 w-6 text-gray-500 flex-shrink-0" />
                     <Input
                       type="number"
                       placeholder="Price"
@@ -365,12 +360,7 @@ const EventForm = ({ type, event, eventId }: EventFormProps) => {
               <FormItem className="w-full">
                 <FormControl>
                   <div className="flex-center h-[54px] w-full overflow-hidden rounded-full bg-grey-50 px-4 py-2">
-                    <Image
-                      src="/assets/icons/ticket.svg" // Assuming you have a ticket icon, or use another
-                      alt="tickets"
-                      width={24}
-                      height={24}
-                    />
+                    <Ticket className="h-6 w-6 text-gray-500" />
                     <Input
                       type="number"
                       placeholder="Max Tickets (0 for unlimited)"

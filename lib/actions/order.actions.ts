@@ -202,3 +202,32 @@ export async function getAvailableTickets(eventId: string) {
     return null
   }
 }
+
+// GET EVENT ATTENDEES (BUYERS) - For event organizers
+export async function getEventAttendees(eventId: string) {
+  try {
+    await connectToDatabase()
+
+    const attendees = await Order.find({ event: eventId })
+      .populate({
+        path: 'buyer',
+        model: User,
+        select: 'firstName lastName email',
+      })
+      .sort({ createdAt: 'desc' })
+      .lean()
+
+    const formattedAttendees = attendees.map((order: any) => ({
+      id: order._id.toString(),
+      name: `${order.buyer.firstName} ${order.buyer.lastName}`,
+      email: order.buyer.email,
+      purchaseDate: order.createdAt,
+      amount: order.totalAmount,
+    }))
+
+    return JSON.parse(JSON.stringify(formattedAttendees))
+  } catch (error) {
+    handleError(error)
+    return []
+  }
+}
