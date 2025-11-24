@@ -5,7 +5,10 @@ import {
   getEventById,
   getRelatedEventsByCategory,
 } from "@/lib/actions/event.actions";
-import { getAvailableTickets, getEventAttendees } from "@/lib/actions/order.actions";
+import {
+  getAvailableTickets,
+  getEventAttendees,
+} from "@/lib/actions/order.actions";
 import { formatDateTime } from "@/lib/utils";
 import { SearchParamProps } from "@/types";
 import Image from "next/image";
@@ -19,10 +22,10 @@ const EventDetails = async ({
   const { userId } = await auth();
   const event = await getEventById(id);
   const availableTickets = await getAvailableTickets(id);
-  
+
   // Check if current user is the event organizer
   const isOrganizer = userId === event.ownerId;
-  
+
   // Get attendees if user is the organizer
   const attendees = isOrganizer ? await getEventAttendees(id) : [];
 

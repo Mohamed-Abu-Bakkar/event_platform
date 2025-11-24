@@ -6,12 +6,7 @@ const Footer = () => {
     <footer className="border-t">
       <div className="flex-center wrapper flex-between flex flex-col gap-4 p-5 text-center sm:flex-row">
         <Link href="/">
-          <Image
-            src="/next.svg"
-            alt="logo"
-            width={128}
-            height={38}
-          />
+          <Image src="/next.svg" alt="logo" width={128} height={38} />
         </Link>
 
         <p>2025 Eventora. All Rights reserved.</p>

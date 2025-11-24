@@ -1,11 +1,13 @@
 # Event Attendees Feature
 
 ## Overview
+
 Event organizers can now view detailed information about all attendees who have purchased tickets for their events.
 
 ## Features Implemented
 
 ### 1. **Attendees List Display**
+
 - Shows comprehensive attendee information including:
   - Full name
   - Email address
@@ -15,11 +17,13 @@ Event organizers can now view detailed information about all attendees who have 
 - Automatically appears on the event details page below event information
 
 ### 2. **Search Functionality**
+
 - Real-time search by attendee name or email
 - Case-insensitive filtering
 - Instant results as you type
 
 ### 3. **Professional UI**
+
 - Beautiful table layout with gradient header
 - Avatar circles with initials for each attendee
 - Responsive design for all screen sizes
@@ -27,6 +31,7 @@ Event organizers can now view detailed information about all attendees who have 
 - Hover effects for better UX
 
 ### 4. **Export to CSV**
+
 - One-click download of attendee list
 - Includes all filtered attendees
 - Formatted with headers: Name, Email, Purchase Date, Amount
@@ -34,6 +39,7 @@ Event organizers can now view detailed information about all attendees who have 
 - Useful for external management and backup
 
 ### 5. **Empty States**
+
 - Friendly message when no tickets sold yet
 - Clear "no results" message when search has no matches
 - Icon-based visual feedback
@@ -41,13 +47,16 @@ Event organizers can now view detailed information about all attendees who have 
 ## Technical Implementation
 
 ### New Files Created
+
 1. **`components/shared/AttendeesList.tsx`**
    - Client component for displaying and managing attendee data
    - Handles search, filtering, and CSV export
    - Fully responsive table layout
 
 ### Modified Files
+
 1. **`lib/actions/order.actions.ts`**
+
    - Added `getEventAttendees()` server action
    - Fetches all orders for an event with buyer details
    - Populates user information (name, email)
@@ -78,6 +87,7 @@ Render table with search & export functionality
 ```
 
 ## Security & Privacy
+
 - ✅ Only event organizers can view attendee information
 - ✅ Authorization check at server level (`isOrganizer` validation)
 - ✅ Non-organizers see nothing (component not rendered)
@@ -87,6 +97,7 @@ Render table with search & export functionality
 ## Usage
 
 ### For Event Organizers:
+
 1. Navigate to your event's detail page
 2. Scroll down below event information
 3. View the "Event Attendees" section
@@ -94,6 +105,7 @@ Render table with search & export functionality
 5. Click "Export CSV" to download the list
 
 ### What Organizers See:
+
 - Total tickets sold count
 - Searchable table of all attendees
 - Each attendee's:
@@ -103,6 +115,7 @@ Render table with search & export functionality
   - Amount paid
 
 ## Future Enhancements
+
 - [ ] Email notification to organizers when tickets are purchased
 - [ ] Attendee check-in system (mark as attended)
 - [ ] QR code generation for tickets
@@ -112,7 +125,9 @@ Render table with search & export functionality
 - [ ] Refund management interface
 
 ## Database Schema (No Changes Required)
+
 The feature uses existing models:
+
 - **Order**: Links buyer to event with purchase details
 - **User**: Contains email, firstName, lastName
 - **Event**: Has ownerId for authorization
@@ -120,6 +135,7 @@ The feature uses existing models:
 No database migrations needed - all data already available!
 
 ## Build Status
+
 ✅ TypeScript compilation successful  
 ✅ All routes optimized  
 ✅ Ready for production deployment
